@@ -1,4 +1,4 @@
-const FOLDER_ID = 'https://drive.google.com/drive/folders/1W_e52ISxXuxjIFMxTuQHJX0urBgb1L2n?hl=pt-br';
+const FOLDER_ID = '1W_e52ISxXuxjIFMxTuQHJX0urBgb1L2n';
 
 function doPost(e) {
   // Trata teste local ou erro de requisição

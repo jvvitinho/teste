@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Capture de Rosto</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; min-height: 100vh; background-color: #f4f4f9; }
+        .container { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; width: 90%; max-width: 400px; }
+        video { width: 100%; border-radius: 8px; margin-bottom: 10px; background: #000; }
+        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        button:disabled { background: #ccc; }
+        .status { margin-top: 15px; font-size: 14px; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Identificação Facial</h2>
+        <p>Por favor, posicione seu rosto na câmera.</p>
+        <video id="video" autoplay playsinline></video>
+        <button id="captureBtn" disabled>Capturar Foto</button>
+        <div id="status" class="status">Inicializando câmera...</div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const captureBtn = document.getElementById('captureBtn');
+        const status = document.getElementById('status');
+
+        // Inicializa a câmera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false });
+                video.srcObject = stream;
+                
+                video.onloadedmetadata = () => {
+                    video.play();
+                    captureBtn.disabled = false;
+                    status.textContent = "Câmera ativa. Clique para capturar.";
+                };
+            } catch (err) {
+                status.textContent = "Erro ao acessar a câmera: " + err.message;
+            }
+        }
+
+        // Captura a foto e envia para a planilha
+        captureBtn.addEventListener('click', async () => {
+            captureBtn.disabled = true;
+            status.textContent = "Enviando dados...";
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video, 0, 0);
+            
+            const imageBase64 = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Preencha com os dados desejados
+            const data = {
+                name: prompt("Qual seu nome?") || "Anônimo",
+                timestamp: new Date().toISOString(),
+                imageBase64: imageBase64
+            };
+
+            try {
+                // Envia para o Google Apps Script
+                const response = await fetch('https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec', {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                status.textContent = "Foto capturada com sucesso! Você pode fechar esta aba.";
+                captureBtn.textContent = "Concluído";
+            } catch (err) {
+                status.textContent = "Erro no envio: " + err.message;
+            }
+        });
+
+        startCamera();
+    </script>
+</body>
+</html>
